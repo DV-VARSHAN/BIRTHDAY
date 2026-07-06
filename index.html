@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>A Promise Kept - Birthday Adventure</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Marcellus&family=Plus+Jakarta+Sans:wght@300;400;600&display=swap');
+
+        :root {
+            --anime-night: #0d1127;
+            --anime-twilight: #1e1b4b;
+            --anime-sunset-top: #2e1065;
+            --anime-sunset-bot: #f472b6;
+            --anime-sky-top: #38bdf8;
+            --anime-sky-bot: #bae6fd;
+            --soft-gold: #fde047;
+            --soft-pink: #fbcfe8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--anime-night);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color: #f8fafc;
+        }
+
+        body::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at center, transparent 30%, rgba(13, 17, 39, 0.4) 100%);
+            pointer-events: none;
+            z-index: 99999;
+        }
+
+        #fx-canvas {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        .scene {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 2s cubic-bezier(0.4, 0, 0.2, 1), visibility 2s;
+            overflow: hidden;
+        }
+
+        .scene.active {
+            opacity: 1;
+            visibility: visible;
+            z-index: 10;
+        }
+
+        button.anime-btn {
+            background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04));
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 14px 45px;
+            border-radius: 4px;
+            color: #fff;
+            font-family: 'Marcellus', serif;
+            font-size: 1.05rem;
+            letter-spacing: 3px;
+            cursor: pointer;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+        button.anime-btn:hover {
+            border-color: var(--soft-pink);
+            background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.08));
+            box-shadow: 0 0 25px rgba(251, 207, 232, 0.4);
+            letter-spacing: 5px;
+        }
+
+        /* --- SCENE 1: Subtitle Intro --- */
+        #scene1 {
+            background: radial-gradient(circle at center, #1e1e38 0%, #090914 100%);
+        }
+        .subtitle-text {
+            font-family: 'Marcellus', serif;
+            font-size: 1.8rem;
+            text-align: center;
+            position: absolute;
+            opacity: 0;
+            letter-spacing: 2px;
+            transition: opacity 1.2s ease-in-out;
+            text-shadow: 0 0 15px rgba(255,255,255,0.3);
+            padding: 0 30px;
+            line-height: 1.8;
+            font-weight: 300;
+        }
+        .title-screen-container {
+            text-align: center;
+            z-index: 5;
+            opacity: 0;
+            transform: scale(0.95);
+            transition: all 2.5s cubic-bezier(0.25, 1, 0.5, 1);
+            display: none;
+        }
+        .title-screen-container.show {
+            display: block;
+            opacity: 1;
+            transform: scale(1);
+        }
+        .main-title {
+            font-family: 'Marcellus', serif;
+            font-size: 2.4rem;
+            letter-spacing: 6px;
+            text-align: center;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.4);
+            background: linear-gradient(180deg, #ffffff 0%, #e0e7ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 40px;
+        }
+
+        /* --- SCENE 2: Dreamlike Star Gate --- */
+        #scene2 {
+            background: linear-gradient(to bottom, #090916, #13132a);
+        }
+        .sky-seal {
+            position: absolute;
+            width: 75vw; height: 75vw;
+            max-width: 500px; max-height: 500px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 50%;
+            animation: slowSpin 60s linear infinite;
+            z-index: 1;
+        }
+        .sky-seal::before {
+            content: ''; position: absolute; inset: 30px;
+            border: 1px dashed rgba(251, 207, 232, 0.15); border-radius: 50%;
+        }
+        @keyframes slowSpin { 100% { transform: rotate(360deg); } }
+
+        .anime-card {
+            background: rgba(15, 18, 36, 0.55);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 4px;
+            padding: 45px 35px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+            z-index: 2;
+            width: 85%;
+            max-width: 380px;
+        }
+        .gate-heading {
+            font-family: 'Marcellus', serif;
+            font-size: 1.4rem;
+            letter-spacing: 4px;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+        .gate-sub {
+            font-size: 0.95rem;
+            opacity: 0.85;
+            letter-spacing: 1px;
+            margin-bottom: 30px;
+            color: var(--soft-pink);
+            text-shadow: 0 0 8px rgba(251, 207, 232, 0.3);
+        }
+        .portal-input {
+            width: 100%;
+            padding: 14px 10px;
+            margin-bottom: 25px;
+            border: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            background: transparent;
+            color: white;
+            font-size: 1.1rem;
+            letter-spacing: 2px;
+            text-align: center;
+            outline: none;
+            transition: all 0.4s ease;
+        }
+        .portal-input::placeholder {
+            letter-spacing: 1px;
+            opacity: 0.4;
+            font-size: 0.95rem;
+        }
+        .portal-input:focus {
+            border-color: var(--soft-pink);
+            box-shadow: 0 4px 12px rgba(251, 207, 232, 0.1);
+        }
+        .shake { animation: shakeFrame 0.5s; border-bottom-color: #ef4444 !important; }
+        @keyframes shakeFrame {
+            0%, 100% { transform: translateX(0); }
+            25%, 75% { transform: translateX(-6px); }
+            50% { transform: translateX(6px); }
+        }
+        .nav-dots { display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; }
+        .dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.15); transition: 0.5s; }
+        .dot.active { background: var(--soft-pink); box-shadow: 0 0 10px var(--soft-pink); }
+
+        /* --- SCENE 3: Watercolor Parallax Highway --- */
+        #scene3 {
+            background: linear-gradient(to bottom, #4f46e5, #818cf8, #fbcfe8);
+            align-items: flex-end;
+        }
+        .cinematic-sun {
+            position: absolute; top: 25%; left: 50%; transform: translateX(-50%);
+            width: 150px; height: 150px; border-radius: 50%;
+            background: linear-gradient(to bottom, #fff, #fef08a);
+            box-shadow: 0 0 60px rgba(254, 240, 138, 0.5);
+        }
+        .anime-sky-clouds {
+            position: absolute; inset: 0;
+            background: radial-gradient(circle at bottom, transparent 40%, rgba(255,255,255,0.2) 100%);
+            pointer-events: none;
+        }
+        .mountain-silhouette {
+            position: absolute; bottom: 80px; width: 200%; height: 35%;
+            background-repeat: repeat-x; background-position: bottom left;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 300"><path d="M0 300 L120 180 L280 260 L450 120 L650 240 L820 160 L1000 300 Z" fill="%23312e81" opacity="0.4"/><path d="M-50 300 L180 200 L390 280 L580 150 L780 250 L920 190 L1100 300 Z" fill="%231e1b4b" opacity="0.7"/></svg>');
+            animation: backgroundScroll 35s linear infinite;
+        }
+        .highway {
+            position: absolute; bottom: 0; width: 100%; height: 90px;
+            background: #111122; border-top: 2px solid rgba(255,255,255,0.1);
+        }
+        .highway-lines {
+            position: absolute; top: 48%; left: 0; width: 200%; height: 2px;
+            background: repeating-linear-gradient(90deg, rgba(255,255,255,0.3) 0, rgba(255,255,255,0.3) 50px, transparent 50px, transparent 100px);
+            animation: backgroundScroll 1.8s linear infinite;
+        }
+        .car-node {
+            position: absolute; bottom: 25px; left: 15%; font-size: 3.5rem;
+            animation: animeVibe 0.6s ease-in-out infinite alternate;
+            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.4));
+        }
+        @keyframes animeVibe { to { transform: translateY(-5px) scaleY(0.98); } }
+        @keyframes backgroundScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+        
+        .cinematic-text {
+            position: absolute; top: 20%; text-align: center; width: 100%; padding: 0 30px;
+            font-family: 'Marcellus', serif; font-size: 1.8rem; letter-spacing: 2px;
+            text-shadow: 0 4px 15px rgba(0,0,0,0.3); opacity: 0; transition: opacity 2s;
+        }
+
+        /* --- SCENE 4: Twilight Lantern Ascent --- */
+        #scene4 {
+            background: linear-gradient(to bottom, #020617, #0f172a, #1e1b4b);
+        }
+        .giant-moon {
+            position: absolute; top: 12%; right: 12%; width: 110px; height: 110px; border-radius: 50%;
+            background: #fff; box-shadow: 0 0 50px rgba(255,255,255,0.6), inset -15px -15px 30px rgba(0,0,0,0.05);
+            opacity: 0; transition: opacity 3s;
+        }
+        .balloon-node-wrap {
+            position: absolute; bottom: -220px; left: 50%; transform: translateX(-50%);
+            width: 110px; height: 160px; animation: skyAscent 14s linear forwards;
+        }
+        .balloon-silhouette {
+            width: 100px; height: 120px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            background: linear-gradient(135deg, #f43f5e, #be123c);
+            box-shadow: inset -15px -15px 30px rgba(0,0,0,0.4), 0 0 25px rgba(244, 63, 94, 0.3);
+            position: relative;
+        }
+        .balloon-silhouette::after {
+            content: ''; position: absolute; bottom: -12px; left: 38px; width: 24px; height: 16px; background: #1e293b;
+        }
+        @keyframes skyAscent { 
+            0% { bottom: -200px; transform: translateX(-50%) scale(1.1); }
+            100% { bottom: 125%; transform: translateX(-20%) scale(0.5); }
+        }
+        .sky-lanterns { position: absolute; font-size: 1.8rem; opacity: 0; animation: floatLanternUp 11s linear infinite; }
+        @keyframes floatLanternUp {
+            0% { transform: translateY(105vh) scale(0.6) rotate(0deg); opacity: 0; }
+            20% { opacity: 0.7; } 80% { opacity: 0.7; }
+            100% { transform: translateY(-25vh) scale(1) rotate(15deg); opacity: 0; }
+        }
+
+        /* --- SCENE 5: Visual Novel Finale --- */
+        #scene5 {
+            background: radial-gradient(circle at center, #23153c 0%, #07040f 100%);
+            justify-content: space-between; padding: 60px 0 40px 0;
+        }
+        .anime-title-speller {
+            width: 100%; text-align: center; font-family: 'Marcellus', serif; font-size: 2.5rem; font-weight: 400;
+            display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; padding: 0 20px; letter-spacing: 4px;
+        }
+        .letter-node {
+            opacity: 0; transform: translateY(30px);
+            text-shadow: 0 0 20px rgba(255,255,255,0.4);
+            background: linear-gradient(to bottom, #ffffff, #fbcfe8);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .letter-node.pop { animation: subtitleReveal 0.8s cubic-bezier(0.215, 0.610, 0.355, 1) forwards; }
+        @keyframes subtitleReveal { to { opacity: 1; transform: translateY(0); } }
+
+        .vn-character-container {
+            opacity: 0; transform: translateY(40px);
+            transition: all 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex; flex-direction: column; align-items: center; z-index: 80;
+            width: 90%; max-width: 500px; margin-bottom: 20px;
+        }
+        .vn-character-container.active { opacity: 1; transform: translateY(0); }
+        .anime-character-avatar { font-size: 6rem; filter: drop-shadow(0 0 20px rgba(255,255,255,0.25)); margin-bottom: -10px; }
+        
+        .vn-dialogue-box {
+            background: rgba(13, 11, 26, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            padding: 20px 30px; border-radius: 4px; width: 100%; text-align: left;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.5); position: relative;
+            line-height: 1.6; font-size: 1.05rem; letter-spacing: 0.5px;
+        }
+        .vn-dialogue-box::before {
+            content: 'NAME: BROTHER'; position: absolute; top: -24px; left: 0;
+            background: #db2777; border: 1px solid rgba(255,255,255,0.1);
+            padding: 2px 14px; font-size: 0.75rem; letter-spacing: 2px; font-weight: bold; color: var(--soft-pink);
+        }
+
+        .cake-stage {
+            width: 100%; height: 200px; display: flex; justify-content: center; align-items: flex-end;
+            opacity: 0; transform: translateY(60px); transition: all 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .cake-stage.reveal { opacity: 1; transform: translateY(0); }
+        .cake-illustration { position: relative; width: 170px; height: 160px; cursor: pointer; }
+        
+        .cake-tier { position: absolute; left: 50%; transform: translateX(-50%); border-radius: 4px; box-shadow: inset 0 -6px 12px rgba(0,0,0,0.1); }
+        .tier-base { bottom: 0; width: 170px; height: 55px; background: #fecdd3; border: 1px solid rgba(0,0,0,0.05); }
+        .tier-mid { bottom: 55px; width: 135px; height: 45px; background: #fef08a; border: 1px solid rgba(0,0,0,0.05); }
+        .tier-head { bottom: 100px; width: 100px; height: 38px; background: #ffffff; border: 1px solid rgba(0,0,0,0.05); }
+        .frosting-drip { position: absolute; top: 0; width: 100%; height: 12px; background: #fb7185; border-radius: 4px; }
+        .frosting-drip::after {
+            content:''; position:absolute; top:6px; left:10px; width:10px; height:18px; background:#fb7185; border-radius:4px;
+            box-shadow: 25px 3px 0 0 #fb7185, 50px -2px 0 0 #fb7185, 70px 4px 0 0 #fb7185;
+        }
+        
+        .candle-cluster { position: absolute; bottom: 138px; left: 50%; transform: translateX(-50%); display: flex; gap: 14px; }
+        .candle-stick { width: 8px; height: 26px; background: repeating-linear-gradient(45deg, #fff, #fff 3px, #f43f5e 3px, #f43f5e 6px); border-radius: 1px; position: relative; }
+        .candle-wick-flame {
+            position: absolute; top: -11px; left: 0px; width: 8px; height: 13px; background: var(--soft-gold);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; box-shadow: 0 0 12px var(--soft-gold), 0 0 20px #f97316;
+            animation: flicker 0.12s infinite alternate; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .candle-wick-flame.extinguished { transform: scale(0); opacity: 0; }
+
+        /* --- SCENE 6: Outro / Epilogue --- */
+        #scene6 { background: #070714; }
+        .epilogue-frame { text-align: center; z-index: 2; padding: 0 25px; }
+        .epilogue-title { font-family: 'Marcellus', serif; font-size: 2.5rem; letter-spacing: 4px; margin-bottom: 20px; }
+        .epilogue-sub { font-size: 1.1rem; opacity: 0.6; line-height: 1.8; margin-bottom: 45px; letter-spacing: 0.5px; }
+    </style>
+</head>
+<body>
+    <canvas id="fx-canvas"></canvas>
+
+    <div id="scene1" class="scene active">
+        <div class="subtitle-text" id="s1-t1">Hey Sis... 👩‍⚕️</div>
+        <div class="subtitle-text" id="s1-t2">There is an adventure for you. 🧭</div>
+        
+        <div id="s1-main" class="title-screen-container">
+            <h1 class="main-title">LET'S START THE ADVENTURE</h1>
+            <button class="anime-btn" onclick="startAdventure()">ENTER PORTAL</button>
+        </div>
+    </div>
+
+    <div id="scene2" class="scene">
+        <div class="sky-seal"></div>
+        <div class="anime-card">
+            <h2 class="gate-heading" id="portal-title">The Road Gate</h2>
+            <p class="gate-sub" id="portal-hint">Your opposite</p>
+            
+            <div class="nav-dots">
+                <div class="dot active" id="dot1"></div>
+                <div class="dot" id="dot2"></div>
+                <div class="dot" id="dot3"></div>
+            </div>
+
+            <input type="text" class="portal-input" id="portal-input" placeholder="Enter Password..." autocomplete="off">
+            <button class="anime-btn" style="padding:10px 30px; font-size:0.9rem;" onclick="checkPortal()">UNLOCK GATE</button>
+        </div>
+    </div>
+
+    <div id="scene3" class="scene">
+        <div class="cinematic-sun"></div>
+        <div class="anime-sky-clouds"></div>
+        <div class="mountain-silhouette"></div>
+        <div class="highway"><div class="highway-lines"></div></div>
+        <div class="car-node">🚗💨</div>
+        <div class="cinematic-text" id="s3-text">Cruising through the gates... Your brother's master plan is officially in motion!</div>
+    </div>
+
+    <div id="scene4" class="scene">
+        <div class="giant-moon"></div>
+        <div class="cinematic-text" id="s4-text" style="color: #fff; top: 25%;">Ascending to the skies! Hang tight, the best is yet to come. 🌟</div>
+        <div class="balloon-node-wrap">
+            <div class="balloon-silhouette"></div>
+        </div>
+    </div>
+
+    <div id="scene5" class="scene">
+        <div class="anime-title-speller" id="final-msg"></div>
+
+        <div class="vn-character-container" id="anime-character">
+            <div class="vn-dialogue-box" id="vn-bubble">Hehe! Happy Birthday to the most amazing sister in the universe! You found the final location! 🎉</div>
+            <div class="anime-character-avatar">👸🏻✨</div>
+        </div>
+
+        <div class="cake-stage" id="cake-stage">
+            <div class="cake-illustration" onclick="blowCandles()">
+                <div class="cake-tier tier-base"></div>
+                <div class="cake-tier tier-mid"></div>
+                <div class="cake-tier tier-head"><div class="frosting-drip"></div></div>
+                <div class="candle-cluster">
+                    <div class="candle-stick"><div class="candle-wick-flame"></div></div>
+                    <div class="candle-stick"><div class="candle-wick-flame"></div></div>
+                    <div class="candle-stick"><div class="candle-wick-flame"></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="scene6" class="scene">
+        <div class="epilogue-frame">
+            <h1 class="epilogue-title">MISSION ACCOMPLISHED</h1>
+            <p class="epilogue-sub">Hope you loved your surprise journey.<br>Have an amazing year ahead, Sis! ❤️</p>
+            <button class="anime-btn" onclick="location.reload()">REPLAY JOURNEY</button>
+        </div>
+    </div>
+
+    <script>
+        // CRASH PROTECTION: Safe, non-blocking mock sound execution loop
+        function playAudio(trackName) { console.log("Requested audio background track: " + trackName); }
+        function playSFX(name) { console.log("SFX effect triggered: " + name); }
+
+        const scenes = document.querySelectorAll('.scene');
+        let currentScene = 1; let portalStage = 1; 
+
+        const portalPasswords = ['NANDHANA', 'KAVINKA', 'TIRAMISU'];
+        const portalTitles = ['The Road Gate', 'The Sky Gate', 'The Final Gate'];
+        const portalHints = ['Your opposite', 'Your near', 'San sweet'];
+
+        function switchScene(sceneNum) {
+            scenes.forEach(s => s.classList.remove('active'));
+            const targetScene = document.getElementById(`scene${sceneNum}`);
+            if(targetScene) {
+                targetScene.classList.add('active');
+                currentScene = sceneNum;
+                initSceneLogic(sceneNum);
+            }
+        }
+
+        function updatePortalUI() {
+            document.getElementById('portal-title').innerText = portalTitles[portalStage - 1];
+            document.getElementById('portal-hint').innerText = portalHints[portalStage - 1];
+            document.getElementById('portal-input').placeholder = "Enter Password...";
+            document.getElementById('portal-input').value = '';
+            for(let i = 1; i <= 3; i++) {
+                let dot = document.getElementById(`dot${i}`);
+                if(dot) {
+                    if(i <= portalStage) dot.classList.add('active'); 
+                    else dot.classList.remove('active');
+                }
+            }
+        }
+
+        function checkPortal() {
+            let inp = document.getElementById('portal-input');
+            if(inp.value.trim().toUpperCase() === portalPasswords[portalStage-1]) {
+                playSFX('success');
+                spawnExplosion(canvasWidth/2, canvasHeight/2, ['#ffffff', '#fbcfe8']);
+                if (portalStage === 1) switchScene(3);
+                else if (portalStage === 2) switchScene(4);
+                else if (portalStage === 3) switchScene(5);
+            } else {
+                playSFX('error'); inp.classList.add('shake'); setTimeout(()=> inp.classList.remove('shake'), 500);
+            }
+        }
+
+        function startAdventure() { playSFX('sparkle'); switchScene(2); }
+
+        const canvas = document.getElementById('fx-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = []; let canvasWidth, canvasHeight; let activeEffect = 'sakura'; 
+
+        function resizeCanvas() { 
+            canvasWidth = canvas.width = window.innerWidth; 
+            canvasHeight = canvas.height = window.innerHeight; 
+        }
+        window.addEventListener('resize', resizeCanvas); resizeCanvas();
+
+        class Particle {
+            constructor(type, x, y, color) {
+                this.type = type; this.x = x !== undefined ? x : Math.random() * canvasWidth; this.y = y !== undefined ? y : Math.random() * canvasHeight;
+                this.color = color || '#fff'; this.size = Math.random() * 2 + 1; this.life = 1; this.decay = Math.random() * 0.008 + 0.004;
+                if (this.type === 'sakura') {
+                    this.size = Math.random() * 5 + 3; this.vx = Math.random() * 1.5 - 0.75; this.vy = Math.random() * 1.5 + 0.8;
+                    this.angle = Math.random() * 360; this.spin = Math.random() * 3 - 1.5; this.color = `rgba(251, 207, 232, ${Math.random() * 0.4 + 0.4})`;
+                } else if (this.type === 'star') { this.vx = 0; this.vy = 0; this.decay = Math.random() * 0.015 + 0.005; this.fadingIn = true; this.life = 0; }
+                else if (this.type === 'firework') { this.vx = (Math.random() - 0.5) * 12; this.vy = (Math.random() - 0.5) * 12; this.gravity = 0.15; this.decay = Math.random() * 0.015 + 0.01; this.size = Math.random() * 2 + 1.5; }
+                else if (this.type === 'confetti') { this.vx = (Math.random() - 0.5) * 8; this.vy = (Math.random() - 0.8) * 12; this.gravity = 0.2; this.angle = Math.random() * 360; this.spin = Math.random() * 6 - 3; this.w = Math.random() * 8 + 4; this.h = Math.random() * 4 + 4; }
+            }
+            update() {
+                if (this.type === 'sakura') { this.x += this.vx; this.y += this.vy; this.angle += this.spin; if (this.y > canvasHeight) this.y = -20; }
+                else if (this.type === 'star') { if(this.fadingIn) { this.life += this.decay; if(this.life >= 1) this.fadingIn = false; } else { this.life -= this.decay; if(this.life <= 0) this.fadingIn = true; } }
+                else if (this.type === 'firework') { this.x += this.vx; this.y += this.vy; this.vy += this.gravity; this.life -= this.decay; }
+                else if (this.type === 'confetti') { this.x += this.vx; this.y += this.vy; this.vy += this.gravity; this.angle += this.spin; this.life -= 0.005; }
+            }
+            draw() {
+                ctx.globalAlpha = this.life > 0 ? this.life : 0;
+                if (this.type === 'sakura') {
+                    ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle * Math.PI / 180); ctx.fillStyle = this.color;
+                    ctx.beginPath(); ctx.ellipse(0, 0, this.size, this.size/1.8, 0, 0, Math.PI*2); ctx.fill(); ctx.restore();
+                } else if (this.type === 'confetti') {
+                    ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle * Math.PI / 180); ctx.fillStyle = this.color;
+                    ctx.fillRect(-this.w/2, -this.h/2, this.w, this.h); ctx.restore();
+                } else { ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill(); }
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+            if(activeEffect === 'sakura' && particles.length < 35) particles.push(new Particle('sakura'));
+            else if (activeEffect === 'stars' && particles.length < 75) particles.push(new Particle('star'));
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update(); particles[i].draw();
+                if (particles[i].life <= 0 && particles[i].type !== 'star' && particles[i].type !== 'sakura') particles.splice(i, 1);
+            }
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
+        function spawnExplosion(x, y, colorArr, isConfetti = false) {
+            let count = isConfetti ? 60 : 20; let type = isConfetti ? 'confetti' : 'firework';
+            for(let i=0; i<count; i++) particles.push(new Particle(type, x, y, colorArr[Math.floor(Math.random() * colorArr.length)]));
+        }
+
+        function initSceneLogic(scene) {
+            particles = []; 
+            if(scene === 2) { activeEffect = 'stars'; playAudio('portal'); updatePortalUI(); }
+            if(scene === 3) {
+                activeEffect = 'sakura'; playAudio('journey'); setTimeout(()=>{ document.getElementById('s3-text').style.opacity = 1; }, 800);
+                setTimeout(() => { document.getElementById('s3-text').style.opacity = 0; portalStage = 2; switchScene(2); }, 7500);
+            }
+            if(scene === 4) {
+                activeEffect = 'stars'; playAudio('balloon');
+                let s4 = document.getElementById('scene4'); s4.querySelectorAll('.sky-lanterns').forEach(el => el.remove());
+                for(let i=0; i<6; i++) {
+                    let l = document.createElement('div'); l.className = 'sky-lanterns'; l.innerHTML = '🏮';
+                    l.style.left = `${Math.random()*80 + 10}%`; l.style.animationDelay = `${Math.random()*5}s`; s4.appendChild(l);
+                }
+                setTimeout(()=>{ document.querySelector('.giant-moon').style.opacity = 0.85; document.getElementById('s4-text').style.opacity = 1; }, 800);
+                setTimeout(() => { document.getElementById('s4-text').style.opacity = 0; portalStage = 3; switchScene(2); }, 9500);
+            }
+            if(scene === 5) { activeEffect = 'stars'; playAudio('cake'); runCelebrationFlow(); }
+        }
+
+        async function runCelebrationFlow() {
+            await revealBirthdayText();
+            setTimeout(() => {
+                document.getElementById('anime-character').classList.add('active');
+                playSFX('sparkle');
+                setTimeout(() => {
+                    document.getElementById('vn-bubble').innerText = "✨ Quick! Make a secret wish now, and tap the birthday cake to blow out the candles!";
+                    document.getElementById('cake-stage').classList.add('reveal');
+                }, 3000);
+            }, 1000);
+        }
+
+        async function revealBirthdayText() {
+            const msg = "HAPPY BIRTHDAY SV"; const container = document.getElementById('final-msg');
+            for(let i=0; i<msg.length; i++) {
+                if(msg[i] === ' ') { let sp = document.createElement('div'); sp.style.width = '20px'; container.appendChild(sp); continue; }
+                let span = document.createElement('div'); span.className = 'letter-node'; span.innerText = msg[i]; container.appendChild(span);
+                void span.offsetWidth; span.classList.add('pop');
+                let rect = span.getBoundingClientRect();
+                spawnExplosion(rect.left + rect.width/2, rect.top + rect.height/2, ['#fff', '#fbcfe8']);
+                playSFX('sparkle'); await new Promise(r => setTimeout(r, 250));
+            }
+        }
+
+        let blownOut = false;
+        function blowCandles() {
+            if(blownOut) return; blownOut = true;
+            document.querySelectorAll('.candle-wick-flame').forEach(f => f.classList.add('extinguished'));
+            document.getElementById('vn-bubble').innerText = "🎈 Mission complete! May all your wishes come true this year! Have a fantastic day, Sis!";
+            
+            const finalColors = ['#ffffff', '#fbcfe8', '#fef08a', '#fda4af'];
+            playSFX('firework');
+            spawnExplosion(canvasWidth/2, canvasHeight/2, finalColors, true);
+            spawnExplosion(canvasWidth/3, canvasHeight/2.5, finalColors, false);
+            spawnExplosion(canvasWidth*0.66, canvasHeight/2.5, finalColors, false);
+
+            setTimeout(() => { switchScene(6); }, 5000);
+        }
+
+        // Guaranteed execution timeline loop
+        setTimeout(() => {
+            const t1 = document.getElementById('s1-t1');
+            if(t1) t1.style.opacity = 1;
+            setTimeout(() => {
+                if(t1) t1.style.opacity = 0;
+                setTimeout(() => {
+                    const t2 = document.getElementById('s1-t2');
+                    if(t2) t2.style.opacity = 1;
+                    setTimeout(() => {
+                        if(t2) t2.style.opacity = 0;
+                        setTimeout(() => {
+                            const mainFrame = document.getElementById('s1-main');
+                            if(mainFrame) mainFrame.classList.add('show');
+                            playAudio('intro');
+                        }, 1000);
+                    }, 2500);
+                }, 800);
+            }, 1800);
+        }, 500);
+    </script>
+</body>
+</html>
